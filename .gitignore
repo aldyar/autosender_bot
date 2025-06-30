@@ -1,0 +1,8 @@
+.venv/
+dev/
+db.sqlite3
+anon_session.session
+config.py
+__pycache__/
+**/__pycache__/
+*.py[cod]
