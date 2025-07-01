@@ -10,3 +10,11 @@ main_menu = ReplyKeyboardMarkup(keyboard=([KeyboardButton(text = '📝 Текс�
 
 group_inline = InlineKeyboardMarkup(inline_keyboard=([InlineKeyboardButton(text = 'Добавить группу',callback_data='SetGroup')],
                                                      [InlineKeyboardButton(text = 'Удалить группу', callback_data= 'DeleteGroup')]))
+
+
+def sender_menu(is_active: bool) -> InlineKeyboardMarkup:
+    toggle_text = "🔴 Отключить" if is_active else "🟢 Активировать"
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=toggle_text, callback_data='toggle_sender')],
+        [InlineKeyboardButton(text='🚀 Запустить рассылку', callback_data='start_manual')]
+    ])

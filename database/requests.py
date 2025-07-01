@@ -73,3 +73,23 @@ class Func:
         config = await session.scalar(select(Config))
         config.time = value
         await session.commit()
+
+    @connection
+    async def save_config(session, data: dict):
+        config = await session.scalar(select(Config))
+        config.api_id = data['api_id']
+        config.api_hash = data['api_hash']
+        config.phone = data['phone']
+        await session.commit()
+
+    @connection
+    async def get_config(session):
+        config = await session.scalar(select(Config))
+        return config
+    
+    @connection
+    async def set_active_status(session, is_active: bool):
+        config = await session.scalar(select(Config))
+        if config:
+            config.is_active = is_active
+            await session.commit()

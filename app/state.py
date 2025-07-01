@@ -6,3 +6,8 @@ class ConfigState(StatesGroup):
     wait_delete_group = State()
     wait_interval = State()
     wait_time = State()
+
+    wait_api_id = State()
+    wait_api_hash = State()
+    wait_phone = State()
+    wait_code = State()

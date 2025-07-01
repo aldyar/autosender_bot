@@ -11,6 +11,7 @@ user = Router()
 
 @user.message(F.text == '📝 Текст рассылки')
 async def text_handler(message:Message,state:FSMContext):
+    await state.clear()
     await state.set_state(ConfigState.wait_text)
     await message.answer("✏️ Введите *новый текст рассылки*:", parse_mode="Markdown")
 

@@ -11,7 +11,8 @@ user = Router()
 
 
 @user.message(F.text == '📂 Группы для рассылки')
-async def group_handler(message: Message):
+async def group_handler(message: Message,state:FSMContext):
+    await state.clear()
     groups = await Func.get_groups()
     
     if groups:

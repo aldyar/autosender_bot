@@ -12,6 +12,7 @@ user = Router()
 
 @user.message(F.text == '⏱ Интервал между сообщениями')
 async def interval_message(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(ConfigState.wait_interval)
     await message.answer("⏱ Введите *интервал в секундах* между сообщениями (например, `5`):", parse_mode="Markdown")
 
@@ -30,6 +31,7 @@ async def save_interval(message: Message, state: FSMContext):
 
 @user.message(F.text == '🕰 Время старта')
 async def start_time(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(ConfigState.wait_time)
     await message.answer("🕰 Введите *время начала рассылки* в формате `ЧЧ:ММ` (например, `14:30`):", parse_mode="Markdown")
 
