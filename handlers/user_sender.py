@@ -22,11 +22,11 @@ async def sender_handler(message: Message,state:FSMContext):
         await message.answer("❌ Аккаунт не настроен.\nДобавьте Telegram-аккаунт.")
         return
 
-    # 🧪 Проверка активности сессии
-    session_ok = await is_session_active(config)
-    if not session_ok:
-        await message.answer("⚠️ Сессия Telegram недействительна или слетела.\nЗайдите повторно в аккаунт.")
-        return
+    # # 🧪 Проверка активности сессии
+    # session_ok = await is_session_active(config)
+    # if not session_ok:
+    #     await message.answer("⚠️ Сессия Telegram недействительна или слетела.\nЗайдите повторно в аккаунт.")
+    #     return
     
     group_count = len(groups)
     text = config.text or '❌ не задан'

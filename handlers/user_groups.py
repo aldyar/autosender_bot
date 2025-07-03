@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.text_decorations import html_decoration
 from database.requests import Func
 from app.state import ConfigState
+from aiogram.filters import StateFilter
 
 user = Router()
 
@@ -28,25 +29,25 @@ async def group_handler(message: Message,state:FSMContext):
 async def add_group(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(ConfigState.wait_add_group)
-    await callback.message.answer("➕ Введите *названия групп* (можно несколько, через новую строку):", parse_mode="Markdown")
+    await callback.message.answer("➕ Введите *названия групп* (можно несколько, через новую строку):", parse_mode="Markdown",reply_markup=kb.back_button)
 
 @user.callback_query(F.data == 'DeleteGroup')
 async def delete_group(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(ConfigState.wait_delete_group)
-    await callback.message.answer("🗑 Введите *названия групп*, которые нужно удалить (по одной на строке):", parse_mode="Markdown")
+    await callback.message.answer("🗑 Введите *названия групп*, которые нужно удалить (по одной на строке):", parse_mode="Markdown",reply_markup=kb.back_button)
 
 
 @user.message(ConfigState.wait_add_group)
 async def process_add_group(message: Message, state: FSMContext):
     group_names = [name.strip().lstrip('@') for name in message.text.split('\n') if name.strip()]
     await Func.add_groups(group_names)
-    await message.answer(f"✅ Добавлено групп: *{len(group_names)}*", parse_mode="Markdown")
+    await message.answer(f"✅ Добавлено групп: *{len(group_names)}*", parse_mode="Markdown",reply_markup=kb.main_menu)
     await state.clear()
 
 @user.message(ConfigState.wait_delete_group)
 async def process_delete_group(message: Message, state: FSMContext):
     group_names = [name.strip().lstrip('@') for name in message.text.split('\n') if name.strip()]
     await Func.delete_groups(group_names)
-    await message.answer(f"🗑 Удалено групп: *{len(group_names)}*", parse_mode="Markdown")
+    await message.answer(f"🗑 Удалено групп: *{len(group_names)}*", parse_mode="Markdown",reply_markup=kb.main_menu)
     await state.clear()

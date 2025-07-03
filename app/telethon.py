@@ -1,5 +1,5 @@
 from telethon import TelegramClient
-from telethon.errors import PhoneCodeInvalidError
+from telethon.errors import PhoneCodeInvalidError,PhoneCodeExpiredError
 from telethon.errors import RPCError
 import asyncio
 from telethon.errors import RPCError, ChatWriteForbiddenError, UserAlreadyParticipantError
@@ -29,6 +29,10 @@ async def login_telegram(api_id, api_hash, phone, code=None):
             await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
         except PhoneCodeInvalidError:
             return "invalid_code", client
+        except PhoneCodeExpiredError:
+            return "code_expired", client
+        except Exception:
+            return "unexpected_error", client
 
     return "ok", client
 
@@ -54,11 +58,27 @@ async def login_telegram(api_id, api_hash, phone, code=None):
 #     return {"success": success, "failed": failed}
 
 async def send_bulk(config, groups,bot:Bot):
+
+    # session_ok = await is_session_active(config)
+    # if not session_ok:
+    #     if bot:
+    #         for admin_id in ADMIN:
+    #             try:
+    #                 await bot.send_message(admin_id, "❌ Сессия неактивна. Войдите заново.")
+    #             except Exception:
+    #                 pass
+    #     return {"success": 0, "failed": len(groups)}
+    
     client = TelegramClient('anon_session', config.api_id, config.api_hash)
     await client.connect()
 
     if not await client.is_user_authorized():
         await client.disconnect()
+        for admin_id in ADMIN:
+            try:
+                await bot.send_message(admin_id, "❌ Сессия неактивна. Войдите заново.")
+            except Exception as e:
+                print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
         return {"success": 0, "failed": len(groups)}
     
     if bot:
@@ -95,21 +115,39 @@ async def send_bulk(config, groups,bot:Bot):
     return {"success": success, "failed": failed}
 
 
+# async def is_session_active(config) -> bool:
+#     try:
+#         client = TelegramClient("anon_session", config.api_id, config.api_hash)
+#         await client.connect()
+
+#         if not await client.is_user_authorized():
+#             await client.disconnect()
+#             return False
+
+#         # Пробуем получить информацию о себе
+#         await client.get_me()
+#         await client.disconnect()
+#         return True
+
+#     except RPCError:
+#         return False
+#     except Exception:
+#         return False
+    
+
 async def is_session_active(config) -> bool:
     try:
-        client = TelegramClient("anon_session", config.api_id, config.api_hash)
+        client = TelegramClient(config.phone, config.api_id, config.api_hash)
         await client.connect()
 
         if not await client.is_user_authorized():
             await client.disconnect()
             return False
 
-        # Пробуем получить информацию о себе
         await client.get_me()
         await client.disconnect()
         return True
 
-    except RPCError:
-        return False
-    except Exception:
+    except Exception as e:
+        print(f"[Session Check Error] {e}")
         return False

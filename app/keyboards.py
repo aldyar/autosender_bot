@@ -18,3 +18,5 @@ def sender_menu(is_active: bool) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=toggle_text, callback_data='toggle_sender')],
         [InlineKeyboardButton(text='🚀 Запустить рассылку', callback_data='start_manual')]
     ])
+
+back_button = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text = '❌ Отмена')]],resize_keyboard=True)
