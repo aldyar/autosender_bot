@@ -93,3 +93,9 @@ class Func:
         if config:
             config.is_active = is_active
             await session.commit()
+
+    @connection
+    async def set_lap_count(session,count):
+        config = await session.scalar(select(Config))
+        config.lap_count = count
+        await session.commit()

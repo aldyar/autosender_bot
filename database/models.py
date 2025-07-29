@@ -21,7 +21,8 @@ class Config(Base):
     time: Mapped[str] = mapped_column(String, nullable=True)
     interval: Mapped[float] = mapped_column(Float, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
+    lap_count: Mapped[int] = mapped_column(Integer, default=1)
+    
 
 class Group(Base):
     __tablename__ = 'groups'

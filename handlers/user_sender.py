@@ -33,12 +33,14 @@ async def sender_handler(message: Message,state:FSMContext):
     interval = f"{config.interval} сек." if config.interval else "❌ не задан"
     time = config.time or "❌ не задан"
     active = "🟢 Активна" if config.is_active else "🔴 Неактивна"
+    lap_count = config.lap_count or 1
+    lap_display = "∞" if lap_count == 1000 else str(lap_count)
 
     msg = (
         f"<b>📤 Настройки рассылки:</b>\n\n"
-        f"📝 Текст:\n" 
-        f"{text}\n"
+        f"📝 Текст:\n{text}\n"
         f"📂 Групп: <b>{group_count}</b>\n"
+        f"🔁 Кругов: <b>{lap_display}</b>\n"
         f"⏱ Интервал: <b>{interval}</b>\n"
         f"🕰 Время старта: <b>{time}</b>\n"
         f"👤 Аккаунт: <code>{config.phone}</code>\n"
@@ -82,3 +84,36 @@ async def start_manual_sender(query: CallbackQuery,bot:Bot):
         f"📬 Рассылка завершена:\n✅ Успешно: <b>{result['success']}</b>\n❌ Ошибок: <b>{result['failed']}</b>",
         parse_mode="HTML"
     )
+
+@user.callback_query(F.data == 'setlap')
+async def set_lap_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer(
+        "🔁 *Укажите количество кругов рассылки:*\n\n"
+        "— Введите число от `1` и выше\n"
+        "— Или введите `∞`, чтобы сделать рассылку цикличной (условно 1000 кругов)",
+        parse_mode='Markdown'
+    )
+    await state.set_state(ConfigState.wait_lap_count)
+    await callback.answer()
+
+
+@user.message(ConfigState.wait_lap_count)
+async def process_lap_count(message: Message, state: FSMContext):
+    input_text = message.text.strip()
+
+    if input_text == "∞":
+        lap_count = 1000
+    else:
+        if not input_text.isdigit():
+            await message.answer("❌ Пожалуйста, введите целое число или `∞`.")
+            return
+        lap_count = int(input_text)
+        if lap_count < 1:
+            await message.answer("❌ Количество кругов должно быть не меньше 1.")
+            return
+
+    await Func.set_lap_count(lap_count)
+
+    await message.answer(f"✅ Количество кругов установлено: {input_text}")
+    await state.clear()
+

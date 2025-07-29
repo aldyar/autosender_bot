@@ -11,3 +11,4 @@ class ConfigState(StatesGroup):
     wait_api_hash = State()
     wait_phone = State()
     wait_code = State()
+    wait_lap_count = State()

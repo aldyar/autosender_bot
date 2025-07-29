@@ -11,7 +11,7 @@ from aiogram import Bot
 code_hashes = {}
 
 async def login_telegram(api_id, api_hash, phone, code=None):
-    client = TelegramClient('anon_session', api_id, api_hash)
+    client = TelegramClient(phone, api_id, api_hash)
     await client.connect()
 
     if not await client.is_user_authorized():
@@ -57,19 +57,8 @@ async def login_telegram(api_id, api_hash, phone, code=None):
 #     await client.disconnect()
 #     return {"success": success, "failed": failed}
 
-async def send_bulk(config, groups,bot:Bot):
-
-    # session_ok = await is_session_active(config)
-    # if not session_ok:
-    #     if bot:
-    #         for admin_id in ADMIN:
-    #             try:
-    #                 await bot.send_message(admin_id, "❌ Сессия неактивна. Войдите заново.")
-    #             except Exception:
-    #                 pass
-    #     return {"success": 0, "failed": len(groups)}
-    
-    client = TelegramClient('anon_session', config.api_id, config.api_hash)
+async def send_bulk(config, groups, bot: Bot):
+    client = TelegramClient(config.phone, config.api_id, config.api_hash)
     await client.connect()
 
     if not await client.is_user_authorized():
@@ -80,39 +69,61 @@ async def send_bulk(config, groups,bot:Bot):
             except Exception as e:
                 print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
         return {"success": 0, "failed": len(groups)}
-    
+
     if bot:
         for admin_id in ADMIN:
             try:
-                await bot.send_message(admin_id, "⏳ *Началась рассылка...*", parse_mode="Markdown")
+                await bot.send_message(admin_id, f"⏳ *Началась рассылка...*\nКоличество кругов: {config.lap_count}", parse_mode="Markdown")
             except Exception as e:
                 print(f"❌ Ошибка при отправке уведомления админу {admin_id}: {e}")
 
-    success, failed = 0, 0
+    total_success, total_failed = 0, 0
 
     try:
-        for group in groups:
-            try:
-                # первая попытка отправить сообщение
-                await client.send_message(group.name, config.text, parse_mode='html')
-                success += 1
-            except ChatWriteForbiddenError:
-                # если нет прав на отправку — пробуем вступить
+        for lap in range(1, (config.lap_count or 1) + 1):
+            success, failed = 0, 0
+            for group in groups:
                 try:
-                    await client(JoinChannelRequest(group.name))
-                    await asyncio.sleep(1)  # подождём немного после вступления
                     await client.send_message(group.name, config.text, parse_mode='html')
                     success += 1
-                except (RPCError, Exception):
+                except ChatWriteForbiddenError:
+                    try:
+                        await client(JoinChannelRequest(group.name))
+                        await asyncio.sleep(1)
+                        await client.send_message(group.name, config.text, parse_mode='html')
+                        success += 1
+                    except (RPCError, Exception):
+                        failed += 1
+                except RPCError:
                     failed += 1
-            except RPCError:
-                failed += 1
 
-            await asyncio.sleep(config.interval or 2)
+                await asyncio.sleep(config.interval or 2)
+
+            total_success += success
+            total_failed += failed
+
+            if bot:
+                for admin_id in ADMIN:
+                    try:
+                        await bot.send_message(admin_id, f"✅ Круг {lap} завершён. Успешно: {success}, Неудач: {failed}")
+                    except Exception as e:
+                        print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
+
+            await asyncio.sleep(3)  # пауза между кругами (можно сделать настраиваемой)
+
     finally:
         await client.disconnect()
 
-    return {"success": success, "failed": failed}
+    # # Финальное сообщение
+    # if bot:
+    #     for admin_id in ADMIN:
+    #         try:
+    #             await bot.send_message(admin_id, f"🎯 Рассылка завершена.\nВсего успешных: {total_success}\nВсего неудачных: {total_failed}")
+    #         except Exception as e:
+    #             print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
+
+    return {"success": total_success, "failed": total_failed}
+
 
 
 # async def is_session_active(config) -> bool:
