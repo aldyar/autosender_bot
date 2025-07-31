@@ -6,6 +6,7 @@ from telethon.errors import RPCError, ChatWriteForbiddenError, UserAlreadyPartic
 from telethon.tl.functions.channels import JoinChannelRequest
 from config import ADMIN
 from aiogram import Bot
+import app.state
 
 # Словарь для хранения хэшей по номерам (можно заменить на FSMContext при желании)
 code_hashes = {}
@@ -58,11 +59,18 @@ async def login_telegram(api_id, api_hash, phone, code=None):
 #     return {"success": success, "failed": failed}
 
 async def send_bulk(config, groups, bot: Bot):
+    # if app.state.IS_SENDING:
+    #     print("⚠️ Рассылка уже идёт. Повторный запуск невозможен.")
+    #     return {"success": 0, "failed": 0}
+
+    app.state.IS_SENDING = True  # включаем флаг
+
     client = TelegramClient(config.phone, config.api_id, config.api_hash)
     await client.connect()
 
     if not await client.is_user_authorized():
         await client.disconnect()
+        app.state.IS_SENDING = False  # сброс флага
         for admin_id in ADMIN:
             try:
                 await bot.send_message(admin_id, "❌ Сессия неактивна. Войдите заново.")
@@ -81,8 +89,16 @@ async def send_bulk(config, groups, bot: Bot):
 
     try:
         for lap in range(1, (config.lap_count or 1) + 1):
+            if not app.state.IS_SENDING:
+                print("🛑 Рассылка остановлена перед кругом.")
+                break
+
             success, failed = 0, 0
             for group in groups:
+                if not app.state.IS_SENDING:
+                    print("🛑 Рассылка остановлена во время цикла.")
+                    break
+
                 try:
                     await client.send_message(group.name, config.text, parse_mode='html')
                     success += 1
@@ -109,10 +125,14 @@ async def send_bulk(config, groups, bot: Bot):
                     except Exception as e:
                         print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
 
-            await asyncio.sleep(3)  # пауза между кругами (можно сделать настраиваемой)
+            await asyncio.sleep(3)
 
     finally:
+        app.state.IS_SENDING = False  # всегда сбрасываем флаг
         await client.disconnect()
+
+    return {"success": total_success, "failed": total_failed}
+
 
     # # Финальное сообщение
     # if bot:
@@ -122,7 +142,7 @@ async def send_bulk(config, groups, bot: Bot):
     #         except Exception as e:
     #             print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
 
-    return {"success": total_success, "failed": total_failed}
+
 
 
 

@@ -5,6 +5,7 @@ import aiocron
 import asyncio
 from config import ADMIN
 import datetime
+from app import state
 
 # async def scheduled_sender(bot: Bot):
 #     config = await Func.get_config()
@@ -43,6 +44,10 @@ async def run_scheduler(bot: Bot):
         config = await Func.get_config()
 
         if config and config.is_active and config.time == now:
+            if state.IS_SENDING:
+                await bot.send_message(admin_id,"⏳ Планировщик: рассылка уже идёт, пропускаем этот запуск.")
+                await asyncio.sleep(60)
+                continue
             groups = await Func.get_groups()
 
             if groups:

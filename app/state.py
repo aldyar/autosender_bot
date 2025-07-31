@@ -1,5 +1,7 @@
 from aiogram.fsm.state import StatesGroup, State
 
+IS_SENDING = False
+
 class ConfigState(StatesGroup):
     wait_text = State()
     wait_add_group = State()

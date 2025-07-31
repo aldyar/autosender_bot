@@ -8,6 +8,7 @@ from database.requests import Func
 from app.state import ConfigState
 from app.telethon import send_bulk,is_session_active
 from aiogram import Bot
+from app import state
 
 user = Router()
 
@@ -66,6 +67,11 @@ async def toggle_sender(query: CallbackQuery,state:FSMContext):
 
 @user.callback_query(F.data == 'start_manual')
 async def start_manual_sender(query: CallbackQuery,bot:Bot):
+
+    if state.IS_SENDING:
+        await query.answer("⚠️ Рассылка уже идёт. Подождите окончания.", show_alert=True)
+        return
+    
     config = await Func.get_config()
     groups = await Func.get_groups()
 
@@ -117,3 +123,12 @@ async def process_lap_count(message: Message, state: FSMContext):
     await message.answer(f"✅ Количество кругов установлено: {input_text}")
     await state.clear()
 
+
+@user.callback_query(F.data == 'stop_manual')
+async def stop_manual_sender(query: CallbackQuery, bot: Bot):
+    if not state.IS_SENDING:
+        await query.answer("⚠️ Сейчас нет активной рассылки.")
+        return
+
+    state.IS_SENDING = False
+    await query.answer("🛑 Рассылка будет остановлена через 5-10 секунд...", show_alert=True)

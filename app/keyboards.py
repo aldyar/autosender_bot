@@ -16,7 +16,8 @@ def sender_menu(is_active: bool) -> InlineKeyboardMarkup:
     toggle_text = "🔴 Отключить" if is_active else "🟢 Активировать"
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=toggle_text, callback_data='toggle_sender')],
-        [InlineKeyboardButton(text='🚀 Запустить рассылку', callback_data='start_manual')],
+        [InlineKeyboardButton(text='🚀 Запустить рассылку', callback_data='start_manual'),
+         InlineKeyboardButton(text = "⏹️ Остановить", callback_data= 'stop_manual')],
         [InlineKeyboardButton(text = '🔄 Круги', callback_data='setlap')]
     ])
 
