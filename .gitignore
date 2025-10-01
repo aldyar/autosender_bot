@@ -1,0 +1,11 @@
+*.session
+*.session-journal
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+config.py
+db.sqlite3
+task.txt
+dev/
